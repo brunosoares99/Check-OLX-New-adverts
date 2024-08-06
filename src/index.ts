@@ -13,6 +13,10 @@ type House = {
 };
 
 const lastHouses: House[] = [];
+const quantityToGet = Number(process.env.QUANTITY_TO_GET || 5);
+const urlWithFilters = process.env.URL_WITH_FILTERS || "";
+const timeToSearch = Number(process.env.TIME_TO_SEARCH || 10);
+const phoneToId = process.env.PHONE_TO_ID || "";
 
 client.once("ready", () => {
   console.log("Client is ready!");
@@ -26,8 +30,8 @@ client.once("ready", () => {
       })
       .then(async (browser) => {
         const page = await browser.newPage();
-        if (!process.env.URL_WITH_FILTERS) return;
-        await page.goto(process.env.URL_WITH_FILTERS);
+        if (!urlWithFilters) return;
+        await page.goto(urlWithFilters);
         await page.waitForSelector(".olx-ad-card.olx-ad-card--horizontal");
         const data: House[] = await page.evaluate(() => {
           const elements = document.querySelectorAll(
@@ -49,10 +53,7 @@ client.once("ready", () => {
           return properties || [];
         });
 
-        const dataWithGetValue = data.slice(
-          0,
-          Number(process.env.QUANTITY_TO_GET) || 5
-        );
+        const dataWithGetValue = data.slice(0, quantityToGet);
 
         const onlyNewHouses = dataWithGetValue.filter(
           (house) =>
@@ -63,11 +64,14 @@ client.once("ready", () => {
           return;
         }
 
-        lastHouses.push(...onlyNewHouses);
-        lastHouses.shift();
-        if (process.env.PHONE_TO_ID) {
+        onlyNewHouses.forEach((house) => {
+          lastHouses.push(house);
+          lastHouses.shift();
+        });
+
+        if (phoneToId) {
           await client.sendMessage(
-            process.env.PHONE_TO_ID,
+            phoneToId,
             `Novos imóveis encontrados: \n  ${onlyNewHouses
               .map((house) => {
                 return `Imóvel ${house.order}: \n ${house.link} \n ${
@@ -83,10 +87,7 @@ client.once("ready", () => {
   }
 
   checkForUpdates();
-  setInterval(
-    checkForUpdates,
-    Number(process.env.TIME_TO_SEARCH || 10) * 60 * 1000
-  );
+  setInterval(checkForUpdates, timeToSearch * 60 * 1000);
 });
 
 client.on("qr", (qr) => {
