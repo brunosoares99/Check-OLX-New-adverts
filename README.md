@@ -48,5 +48,5 @@ You can adjust the frequency of checks and other settings in the `.env` file. Ma
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+This project is licensed under the MIT License.
 
